@@ -416,22 +416,22 @@ void PickLetter(std::vector<Letter*> &currentAnswer, std::vector<Letter> &Select
 void PrintSelection(std::vector<Letter> &Selection, const int maxLetter)
 {
 	for (int i = 0; i < maxLetter; i++)
-	{	std::cout<<  Selection[i].getUsed() ? "      " : " ___  ";
+	{	std::cout<<  (Selection[i].getUsed() ? "      " : " ___  ");
 	}
 
 	std::cout << "\n";
 	for (int i = 0; i < maxLetter; i++)
-	{	std::cout<<  Selection[i].getUsed() ? "      " : "/   \\ ";
+	{	std::cout<<  (Selection[i].getUsed() ? "      " : "/   \\ ");
 	}
 
 	std::cout << "\n";
 	for (int i = 0; i < maxLetter; i++)
-	{	std::cout<<  Selection[i].getUsed() ? "      " : (std::string("| ") + Selection[i].getFigure() + " | ");
+	{	std::cout<<  (Selection[i].getUsed() ? "      " : (std::string("| ") + Selection[i].getFigure() + " | "));
 	}
 
 	std::cout << "\n";
 	for (int i = 0; i < maxLetter; i++)
-	{	std::cout<<  Selection[i].getUsed() ? "      " : "\\___/ ";
+	{	std::cout<<  (Selection[i].getUsed() ? "      " : "\\___/ ");
 	}
 	
 	std::cout << "\n\n";
