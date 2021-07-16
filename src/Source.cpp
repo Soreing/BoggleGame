@@ -245,6 +245,7 @@ void DictionaryBubbleSort(std::vector<std::string> &wordList)
 		std::cout << wordList[sorted] << '\n';
 	}
 }
+
 // DirectLoadDictionary loads a single file as the dictionary. Only use it with processed files!!!//
 void DirectLoadDictionary(std::vector<std::string> &wordList, const std::string &path)
 {
@@ -258,6 +259,7 @@ void DirectLoadDictionary(std::vector<std::string> &wordList, const std::string 
 
 	inFile.close();
 }
+
 //MakeDictionary processes, sorts and saves a dictionary file in the resource folder//
 void MakeDictionary(std::vector<std::string> &wordList)
 {
@@ -292,7 +294,6 @@ void MakeDictionary(std::vector<std::string> &wordList)
 	}
 }
 
-
 /*Functions for the Scoring Functionality*/
 //isLegit is the Binary Search function that checks if the entered word is found in the dictionary//
 bool isLegit(const std::string word, const std::vector<std::string> &wordList)
@@ -311,42 +312,56 @@ bool isLegit(const std::string word, const std::vector<std::string> &wordList)
 	}
 	return false;
 }
+
+// Score set of different letters based on their frequency in the english alphabet
+//                         A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z
+const char scoreSet[26] = {1,3,3,2,1,3,3,2,1,5,4,3,3,2,1,3,5,2,2,1,3,4,3,5,3,5};
+
 //score is the function that scores the game after the words have been entered//
-int score(const std::vector<std::string> &wordList, std::vector<Answer> &previousAnswers, const int maxLetters)
+int score(const std::vector<std::string> &wordList, std::vector<Answer> &answers, const int maxLetters)
 {
-	//initial score is 0
-	int score = 0;
-	bool unique = true;
-	//for all words entered
-	for (int i = 0; i < previousAnswers.size(); i++)
+	int score    = 0;
+	bool unique  = true;
+	bool correct = true;
+	std::string currentWord;
+
+	// For all words entered by the user
+	for (int i = 0; i < (int)answers.size(); i++)
 	{
-		//write out the word
-		std::cout << std::setw(maxLetters) << std::left << previousAnswers[i].getAnswerString();
+		currentWord = answers[i].getAnswerString();
+		std::cout << std::setw(maxLetters) << std::left << currentWord;
+
+		// Test if the answer is correct
+		correct = isLegit(currentWord, wordList);
+
+		// Test if the answer is already present or not
 		unique = true;
-		//test if the answer is already present or not
 		for (int j = 0; j < i && unique; j++)
-			if (previousAnswers[j].getAnswerString() == previousAnswers[i].getAnswerString())
-				unique = false;
-		//if the answer is unique
-		if (unique)
-			//if it is a correct word
-			if (isLegit(previousAnswers[i].getAnswerString(), wordList))
-			{
-				//write out the status and increase the score by 1
-				std::cout << "   Correct\n";
-				score++;
+		{	if (answers[j].getAnswerString() == currentWord)
+			{	unique = false;
 			}
-			else
-				std::cout << "   Incorrect\n";
+		}
+
+		// Print out the state of the word
+		// Increase the score by some for each letter if it's correct and unique
+		if(!correct)
+		{	std::cout << "   Incorrect\n";
+		}
+		else if(!unique)
+		{	std::cout << "   Repeated\n";
+		}
 		else
-			std::cout << "   Repeated\n";
+		{	std::cout << "   Correct\n";
+				
+			for(int j = 0; j < (int)currentWord.size(); j++)
+			{	score+= scoreSet[currentWord[j]-'A'];
+			}
+		}
 	}
-	//state total number of correct words
-	std::cout << "\n\n" << "You got " << score << " words right!\n";
-	//return the correct number of words
+
+	std::cout << "\n\n" << "You got a score of " << score << "!\n";
 	return score;
 }
-
 
 /*Functions for the Game Functionality*/
 //DeleteLetter returns the last letter to the selection//
