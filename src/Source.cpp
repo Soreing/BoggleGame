@@ -15,6 +15,7 @@
 #define NUMBEROFMENUOPTIONS 6
 #define MAINMENUOFFSET 10
 #define MENUOFFSET 20
+#define PAGE_LENGTH 27
 
 #define BCKSP 8
 #define ENTER 13
@@ -25,6 +26,31 @@
 #define DOWN  80
 
 static const std::string resPath = "../Resources/";
+
+// Moves teh cursor to the start of the terminal at 0,0
+void cursorHome()
+{
+	HANDLE hOut;
+	COORD Position;
+
+	hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	Position.X = 0;
+	Position.Y = 0;
+	SetConsoleCursorPosition(hOut, Position);
+}
+
+// Empties the screen from text
+void emptyScreen()
+{
+	cursorHome();
+	
+	for(int i=0;i<PAGE_LENGTH; i++)
+	{	std::cout << "                                                                               \n";
+	}
+	
+	cursorHome();
+}
 
 /*Functions for Misc Purposes*/
 //ShowWholeFile loads the entire content of a file into memory and outputs it to the screen//
@@ -48,7 +74,7 @@ void Credits()
 	
 	// Wait for input and return	
 	_getch(); 
-	system("CLS");
+	emptyScreen();
 	return;
 }
 
@@ -90,9 +116,9 @@ void Swap(std::string &value1, std::string &value2)
 //SortHighScores sorts the three elements of the highscores into decreasing order using bubble sort//
 void SortHighScores(std::vector<int> &score, std::vector<std::string> &name, std::vector<int> &words)
 {
-	for (int i = 0; i < (int)words.size(); i++)
-	{	for (int j = words.size() - 1; j> i; j--)
-		{	if (words[j] > words[j - 1])
+	for (int i = 0; i < (int)score.size(); i++)
+	{	for (int j = score.size() - 1; j> i; j--)
+		{	if (score[j] > score[j - 1])
 			{	Swap(words[j], words[j - 1]);
 				Swap(name[j], name[j - 1]);
 				Swap(score[j], score[j - 1]);
@@ -179,7 +205,7 @@ void OptionsMenu(Option GameOptions[])
 
 	for (;;)
 	{
-		system("CLS");
+		emptyScreen();
 
 		//print art and instructions
 		ShowWholeFile(resPath+"BackgroundTop.dat");
@@ -293,7 +319,7 @@ void MakeDictionary(std::vector<std::string> &wordList)
 		std::cout << "!! This could take very long.. this option processes thousands of words, and sorts them. !!\n";
 		std::cout << "!! Are you sure you want to continue? (Y/N)";
 		option = _getch();
-		system("CLS");
+		emptyScreen();
 	}
 
 	if (toupper(option) == 'Y')
@@ -498,7 +524,7 @@ void GetSeed(int &seed, const int indent)
 {
 	std::string input;
 
-	system("CLS");
+	emptyScreen();
 	ShowWholeFile(resPath+"BackgroundTop.dat");
 	ShowWholeFile(resPath+"SeedInstructions.dat");
 
@@ -539,7 +565,7 @@ void PlayGame(Option GameOptions[], const std::vector<std::string> &wordList)
 
 	for (int answerCount = 0; answerCount < GameOptions[1].getOptionValue();)
 	{
-		system("CLS");
+		emptyScreen();
 
 		// Print art, instructions and data
 		ShowWholeFile(resPath+"BackgroundTop.dat");
@@ -579,7 +605,7 @@ void PlayGame(Option GameOptions[], const std::vector<std::string> &wordList)
 	}
 
 	// Show results
-	system("CLS");
+	emptyScreen();
 	PrintSelection(Selection, GameOptions[0].getOptionValue());
 
 	score(wordList, previousAnswers, GameOptions[0].getOptionValue(), playerScore, correctWords);
@@ -587,8 +613,9 @@ void PlayGame(Option GameOptions[], const std::vector<std::string> &wordList)
 	std::cout << "\n\n" << "You got a score of " << playerScore << " with " << correctWords <<" correct words!\n";
 	std::cout << "Your Seed was: " << seed << "\n\n";
 
-	system("PAUSE");
-	system("CLS");
+	std::cout<< "Press any key to continue...\n";
+	_getch();
+	emptyScreen();
 
 	// Handle highscore
 	std::string name;
@@ -608,11 +635,11 @@ void PlayGame(Option GameOptions[], const std::vector<std::string> &wordList)
 	SortHighScores(score, names, words);
 	SaveHighScores(score, names, words, resPath+"HighScores.dat");
 
-	system("CLS");
+	emptyScreen();
 	ShowHighScores();
 
 	_getch();
-	system("CLS");
+	emptyScreen();
 }
 
 //MainMenu function connects everything in the program with a menu//
@@ -633,7 +660,7 @@ void MainMenu()
 
 	for (;;)
 	{
-		system("CLS");
+		emptyScreen();
 
 		// Print art and instructions
 		ShowWholeFile(resPath+"BackgroundTop.dat");
@@ -658,7 +685,7 @@ void MainMenu()
 		{	active++;
 		}
 		else if (btnPress == ENTER)
-		{	system("CLS");
+		{	emptyScreen();
 			switch (active)
 			{	case 0: PlayGame(GameOptions, wordList); break;
 				case 1: OptionsMenu(GameOptions); break;
