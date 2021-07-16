@@ -15,6 +15,9 @@
 #define MAINMENUOFFSET 10
 #define MENUOFFSET 20
 
+#define ENTER 13
+#define ESC   27
+
 static const std::string resPath = "../Resources/";
 
 /*Functions for Misc Purposes*/
@@ -23,27 +26,34 @@ void ShowWholeFile(const std::string path)
 {
 	std::ifstream inFile(path);
 	std::string file, part;
+
 	while (getline(inFile, part))
-		file += part + '\n';
+	{	file += part + '\n';
+	}
 	std::cout << file << "\n";
+	
 	inFile.close();
 }
+
 //ShowHighScores is a specialized version of "ShowWholeFile" with an extra header bar//
 void ShowHighScores()
 {
 	std::cout << std::setw(8) << std::left << "Place" << std::setw(15) << std::left << "Name" << std::setw(8) << std::left << "Score" << "Correct Words\n\n";
 	ShowWholeFile(resPath+"HighScores.dat");
 }
+
 //LoadHighScores loads the top 10 values of the highscore to their respective vectors//
 void LoadHighScores(std::vector<int> &score, std::vector<std::string> &name, std::vector<int> &words, const std::string path)
 {
 	std::ifstream inFile(path);
+
 	for (int index = 0; index < 10; index++)
-	{
-		inFile >> name[index] >> name[index] >> score[index] >> words[index];
+	{	inFile >> name[index] >> name[index] >> score[index] >> words[index];
 	}
+	
 	inFile.close();
 }
+
 //Swap functions simply swap two values. it's overloaded to work with int and string//
 void Swap(int &value1, int &value2)
 {
@@ -51,35 +61,39 @@ void Swap(int &value1, int &value2)
 	value1 = value2;
 	value2 = temp;
 }
+
 void Swap(std::string &value1, std::string &value2)
 {
 	std::string temp = value1;
 	value1 = value2;
 	value2 = temp;
 }
+
 //SortHighScores sorts the three elements of the highscores into decreasing order using bubble sort//
 void SortHighScores(std::vector<int> &score, std::vector<std::string> &name, std::vector<int> &words)
 {
-	for (int i = 0; i < words.size(); i++)
-		for (int j = words.size() - 1; j> i; j--)
-			if (words[j] > words[j - 1])
-			{
-				Swap(words[j], words[j - 1]);
+	for (int i = 0; i < (int)words.size(); i++)
+	{	for (int j = words.size() - 1; j> i; j--)
+		{	if (words[j] > words[j - 1])
+			{	Swap(words[j], words[j - 1]);
 				Swap(name[j], name[j - 1]);
 				Swap(score[j], score[j - 1]);
 			}
+		}
+	}
 }
 //SaveHighScores just saves the highscores into a file//
 void SaveHighScores(std::vector<int> &score, std::vector<std::string> &name, std::vector<int> &words, const std::string path)
 {
 	std::ofstream outFile(path);
+	
 	for (int index = 0; index < 10; index++)
-	{
-		outFile << std::setw(8) << std::left << index + 1;
+	{	outFile << std::setw(8) << std::left << index + 1;
 		outFile << std::setw(15) << std::left << name[index];
 		outFile << std::setw(8) << std::left << score[index];
 		outFile << std::left << words[index] << '\n';
 	}
+	
 	outFile.close();
 }
 
@@ -91,76 +105,90 @@ void LoadOptions(Option Options[], const std::string path, const int number)
 	std::ifstream inFile(path);
 	std::string word;
 	int value;
+
 	for (int index = 0; index < number; index++)
-	{
-		inFile >> word;
+	{	inFile >> word;
 		Options[index].setOptionName(word);
 		inFile >> value;
 		Options[index].setOptionValue(value);
 		inFile >> value;
 		Options[index].setOptionMaximum(value);
 	}
+
 	inFile.close();
 }
 //SaveOptions saves the array Option Objects' values into their respective file// 
 void SaveOptions(Option Options[], const std::string path, const int number)
 {
 	std::ofstream outFile(path);
+	
 	for (int index = 0; index < number; index++)
-	{
-		outFile << Options[index].getOptionName() << ' ';
+	{	outFile << Options[index].getOptionName() << ' ';
 		outFile << Options[index].getOptionValue() << ' ';
 		outFile << Options[index].getOptionMaximum() << '\n';
 	}
+	
 	outFile.close();
 }
 //ChangeOptionValue increases or decreases the value of an Option object or loops the value if it hit it's boundary//
-void ChangeOptionValue(Option &oneOption, const int change)
+void ChangeOptionValue(Option &option, const int change)
 {
-	if (oneOption.getOptionValue() + change == -1)
-		oneOption.setOptionValue(oneOption.getOptionMaximum());
-	else if (oneOption.getOptionValue() + change == oneOption.getOptionMaximum() + 1)
-		oneOption.setOptionValue(0);
-	else
-		oneOption.setOptionValue(oneOption.getOptionValue() + change);
+	int current = option.getOptionValue();
+	int maximum = option.getOptionMaximum() + 1;
+
+	option.setOptionValue((current + change + maximum) % maximum);
 }
+
 //PrintOption Prints the name and value(if necessary) of an Option object, and prints an arrow if it's currently selected//
 void PrintOption(Option &oneOption, const int active, const int index, const int indent)
 {
-	if (active == index)
-		std::cout << std::setw(indent) << std::right << "->";
-	else
-		std::cout << std::setw(indent) << std::right << "  ";
+	std::cout << std::setw(indent) << std::right << (active == index ? "->" : "  ") ;
 	std::cout << std::setw(25) << std::left << oneOption.getOptionName();
+	
+	// Only print the option value if it's a numeric option
 	if (oneOption.getOptionMaximum() > 0)
-		std::cout << std::setw(3) << std::left << oneOption.getOptionValue();
+	{	std::cout << std::setw(3) << std::left << oneOption.getOptionValue();
+	}
+	
 	std::cout << '\n';
 }
+
 //OptionsMenu is the connecting function that handles all the options//
 void OptionsMenu(Option GameOptions[])
 {
 	int active = 0;
+
 	//exit upon escape or enter
-	for (char buttonPress = ' '; buttonPress != 27 && buttonPress != 13;)
+	for (char buttonPress = ' '; buttonPress != ESC && buttonPress != ENTER;)
 	{
 		system("CLS");
+
 		//print art and instructions
 		ShowWholeFile(resPath+"BackgroundTop.dat");
 		ShowWholeFile(resPath+"OptionsMenuInstructions.dat");
+
 		//print all the options
 		for (int i = 0; i < NUMBEROFOPTIONS; i++)
-			PrintOption(GameOptions[i], active, i, MENUOFFSET);
+		{	PrintOption(GameOptions[i], active, i, MENUOFFSET);
+		}
+
 		buttonPress = _getch();
+
 		//act according to input
 		if (tolower(buttonPress) == 'w' && active > 0)
-			active--;
+		{	active--;
+		}
 		else if (tolower(buttonPress) == 's' && active < NUMBEROFOPTIONS - 1)
-			active++;
+		{	active++;
+		}
 		else if (tolower(buttonPress) == 'a')
-			ChangeOptionValue(GameOptions[active], -1);
+		{	ChangeOptionValue(GameOptions[active], -1);
+		}
 		else if (tolower(buttonPress) == 'd')
-			ChangeOptionValue(GameOptions[active], 1);
+		{	ChangeOptionValue(GameOptions[active], 1);
+		}
 	}
+
 	//save changes
 	SaveOptions(GameOptions, resPath+"Settings.dat", NUMBEROFOPTIONS);
 }
@@ -173,48 +201,61 @@ void ProcessFile(std::vector<std::string> &wordList, const std::string path)
 	bool repeated;
 	std::ifstream inFile(path);
 	std::string word, processedWord;
+
 	for (; inFile >> word;)
 	{
 		//reset word properties
 		repeated = false;
 		processedWord.clear();
+
 		//passes letters to the other string capitalized
-		for (int i = 0; i < word.length(); i++)
-			if (isalpha(word.at(i)))
-				processedWord += toupper(word.at(i));
+		for (int i = 0; i < (int)word.length(); i++)
+		{	if (isalpha(word.at(i)))
+			{	processedWord += toupper(word.at(i));
+			}
+		}
+
 		//check the whole list if the word is repeated or not
-		for (int j = 0; j < wordList.size(); j++)
-			if (wordList[j] == processedWord)
-				repeated = true;
+		for (int j = 0; j < (int)wordList.size(); j++)
+		{	if (wordList[j] == processedWord)
+			{	repeated = true;
+			}
+		}
+
 		//if it's not repeated and at least 3 letters, pass the correct word
 		if (!repeated && processedWord.length()>2)
-		{
-			wordList.push_back(processedWord);
-			//writing out the processed words as a debug
+		{	wordList.push_back(processedWord);
 			std::cout << processedWord << '\n';
 		}
 	}
+
 	inFile.close();
 }
+
 // DictionaryBubbleSort uses Bubble Sort to arrange the dictionary in alphabetical order//
 void DictionaryBubbleSort(std::vector<std::string> &wordList)
 {
-	for (int sorted = 0; sorted < wordList.size(); sorted++)
+	for (int sorted = 0; sorted < (int)wordList.size(); sorted++)
 	{
 		for (int unsorted = wordList.size() - 1; unsorted > sorted; unsorted--)
-			if (wordList[unsorted] < wordList[unsorted - 1])
-				Swap(wordList[unsorted], wordList[unsorted - 1]);
+		{	if (wordList[unsorted] < wordList[unsorted - 1])
+			{	Swap(wordList[unsorted], wordList[unsorted - 1]);
+			}
+		}
 		std::cout << wordList[sorted] << '\n';
 	}
 }
 // DirectLoadDictionary loads a single file as the dictionary. Only use it with processed files!!!//
 void DirectLoadDictionary(std::vector<std::string> &wordList, const std::string &path)
 {
-	wordList.clear();
 	std::string word;
 	std::ifstream inFile(path);
+
+	wordList.clear();
 	while (inFile >> word)
-		wordList.push_back(word);
+	{	wordList.push_back(word);
+	}
+
 	inFile.close();
 }
 //MakeDictionary processes, sorts and saves a dictionary file in the resource folder//
@@ -228,18 +269,25 @@ void MakeDictionary(std::vector<std::string> &wordList)
 		option = _getch();
 		system("CLS");
 	}
+
 	if (toupper(option) == 'Y')
 	{
 		wordList.clear();
+
 		//Place Text Files Here To make a Dictionary File
 		ProcessFile(wordList, resPath+"ThreeLetter Word01.txt");
 		ProcessFile(wordList, resPath+"FourLetter Words02.txt");
 		ProcessFile(wordList, resPath+"FiveLetter Words03.txt");
 		ProcessFile(wordList, resPath+"FinalData.txt");
+
 		DictionaryBubbleSort(wordList);
+
 		std::ofstream outFile(resPath+"DataSet.dat");
-		for (int i = 0; i < wordList.size(); i++)
-			outFile << wordList[i] << '\n';
+
+		for (int i = 0; i < (int)wordList.size(); i++)
+		{	outFile << wordList[i] << '\n';
+		}
+
 		outFile.close();
 	}
 }
@@ -249,14 +297,17 @@ void MakeDictionary(std::vector<std::string> &wordList)
 //isLegit is the Binary Search function that checks if the entered word is found in the dictionary//
 bool isLegit(const std::string word, const std::vector<std::string> &wordList)
 {
-	for (int min = 0, max = wordList.size(); min <= max;)
+	for (int min = 0, max = (int)wordList.size(); min <= max;)
 	{
 		if (word == wordList[(min + max) / 2])
-			return true;
+		{	return true;
+		}
 		else if (word < wordList[(min + max) / 2])
-			max = (min + max) / 2 - 1;
+		{	max = (min + max) / 2 - 1;
+		}
 		else
-			min = (min + max) / 2 + 1;
+		{	min = (min + max) / 2 + 1;
+		}
 	}
 	return false;
 }
