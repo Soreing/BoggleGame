@@ -15,8 +15,11 @@
 #define MAINMENUOFFSET 10
 #define MENUOFFSET 20
 
+#define BCKSP 8
 #define ENTER 13
 #define ESC   27
+#define UP    72
+#define DOWN  80
 
 static const std::string resPath = "../Resources/";
 
@@ -35,11 +38,23 @@ void ShowWholeFile(const std::string path)
 	inFile.close();
 }
 
+// Display credits information
+void Credits()
+{
+	ShowWholeFile(resPath+"Credits.dat"); 
+	
+	// Wait for input and return	
+	_getch(); 
+	system("CLS");
+	return;
+}
+
 //ShowHighScores is a specialized version of "ShowWholeFile" with an extra header bar//
 void ShowHighScores()
 {
 	std::cout << std::setw(8) << std::left << "Place" << std::setw(15) << std::left << "Name" << std::setw(8) << std::left << "Score" << "Correct Words\n\n";
 	ShowWholeFile(resPath+"HighScores.dat");
+	_getch();
 }
 
 //LoadHighScores loads the top 10 values of the highscore to their respective vectors//
@@ -318,9 +333,10 @@ bool isLegit(const std::string word, const std::vector<std::string> &wordList)
 const char scoreSet[26] = {1,3,3,2,1,3,3,2,1,5,4,3,3,2,1,3,5,2,2,1,3,4,3,5,3,5};
 
 //score is the function that scores the game after the words have been entered//
-int score(const std::vector<std::string> &wordList, std::vector<Answer> &answers, const int maxLetters)
+int score(const std::vector<std::string> &wordList, std::vector<Answer> &answers, const int maxLetters, int &score, int &wordCnt)
 {
-	int score    = 0;
+	score   = 0;
+	wordCnt = 0;
 	bool unique  = true;
 	bool correct = true;
 	std::string currentWord;
@@ -352,14 +368,14 @@ int score(const std::vector<std::string> &wordList, std::vector<Answer> &answers
 		}
 		else
 		{	std::cout << "   Correct\n";
-				
+			
+			wordCnt++;	
 			for(int j = 0; j < (int)currentWord.size(); j++)
 			{	score+= scoreSet[currentWord[j]-'A'];
 			}
 		}
 	}
 
-	std::cout << "\n\n" << "You got a score of " << score << "!\n";
 	return score;
 }
 
@@ -370,185 +386,222 @@ void DeleteLetter(std::vector<Letter*> &currentAnswer)
 	currentAnswer[currentAnswer.size() - 1]->setUsed(false);
 	currentAnswer.pop_back();
 }
+
 //PassAnswer submits the written word//
 void PassAnswer(std::vector<Letter*> &currentAnswer, std::vector<Answer> &previousAnswers, const  int answerCount)
 {
 	while (currentAnswer.size() > 0)
-	{
-		previousAnswers[answerCount].setAnswerString(currentAnswer[currentAnswer.size() - 1]->getFigure() + previousAnswers[answerCount].getAnswerString());
+	{	previousAnswers[answerCount].setAnswerString(currentAnswer[currentAnswer.size() - 1]->getFigure() + previousAnswers[answerCount].getAnswerString());
 		DeleteLetter(currentAnswer);
 	}
 }
+
 //PickLetter takes a letter from the selection and adds it to the word being written//
 void PickLetter(std::vector<Letter*> &currentAnswer, std::vector<Letter> &Selection, const int &index)
 {
 	currentAnswer.push_back(&Selection[index]);
 	Selection[index].setUsed(true);
 }
+
 //PrintSelection prints the generated letters for the game//
 void PrintSelection(std::vector<Letter> &Selection, const int maxLetter)
 {
 	for (int i = 0; i < maxLetter; i++)
-		if (!Selection[i].getUsed())
-			std::cout << " ___  ";
-		else
-			std::cout << "      ";
+	{	std::cout<<  Selection[i].getUsed() ? "      " : " ___  ";
+	}
+
 	std::cout << "\n";
 	for (int i = 0; i < maxLetter; i++)
-		if (!Selection[i].getUsed())
-			std::cout << "/   \\ ";
-		else
-			std::cout << "      ";
+	{	std::cout<<  Selection[i].getUsed() ? "      " : "/   \\ ";
+	}
+
 	std::cout << "\n";
 	for (int i = 0; i < maxLetter; i++)
-		if (!Selection[i].getUsed())
-			std::cout << "| " << Selection[i].getFigure() << " | ";
-		else
-			std::cout << "      ";
+	{	std::cout<<  Selection[i].getUsed() ? "      " : (std::string("| ") + Selection[i].getFigure() + " | ");
+	}
+
 	std::cout << "\n";
 	for (int i = 0; i < maxLetter; i++)
-		if (!Selection[i].getUsed())
-			std::cout << "\\___/ ";
-		else
-			std::cout << "      ";
+	{	std::cout<<  Selection[i].getUsed() ? "      " : "\\___/ ";
+	}
+	
 	std::cout << "\n\n";
 }
+
 //isValidChoice tests if the letter pressed exists in the selection generated or not//
 bool isValidChoice(std::vector<Letter> &Selection, const int maxLetter, const char buttonPress, int &index)
 {
 	index = 0;
+
 	for (; index < maxLetter; index++)
-		if (!Selection[index].getUsed() && Selection[index].getFigure() == toupper(buttonPress))
-			return true;
+	{	if (!Selection[index].getUsed() && Selection[index].getFigure() == toupper(buttonPress))
+		{	return true;
+		}
+	}
+
 	return false;
 }
+
 //ReGenerate is the function that regenerates the selection of letters if necessary//
-int ReGenerate(std::vector<Letter> &Selection, const int existLetters)
+void ReGenerate(std::vector<Letter> &Selection, const int existLetters)
 {
 	for (int j = 0; j < existLetters; j++)
-		if (Selection[existLetters].getFigure() == Selection[j].getFigure())
-		{
-			Selection[existLetters].setFigure(rand() % 26 + 65);
+	{	if (Selection[existLetters].getFigure() == Selection[j].getFigure())
+		{	Selection[existLetters].setFigure(rand() % 26 + 65);
 			j = 0;
 		}
-	return 0;
+	}
+
+	return;
 }
+
 //Generate generates a selection of letters for the game//
 void GenerateLetters(std::vector<Letter> &Selection, const int maxLetters, const bool repetition)
 {
-	int vowels = 0;
+	const static std::string vowelList = "AIEOU";
+	int vowelCount = 0;
+
 	for (int i = 0; i < maxLetters; i++)
 	{
-		Selection[i].setFigure(rand() % 26 + 65);
-		if (!repetition)
-			ReGenerate(Selection, i);
+		// Generate a new letter
+		Selection[i].setFigure(rand() % 26 + 'A');
 		Selection[i].setUsed(false);
-		if (Selection[i].getFigure() == 'A' || Selection[i].getFigure() == 'I' || Selection[i].getFigure() == 'E' || Selection[i].getFigure() == 'O' || Selection[i].getFigure() == 'U')
-			vowels++;
-		if (i == maxLetters - 1 && vowels == 0)
-			Selection[i].setFigure('A');
+
+		// If letter repetition is not allowed, re-generate the letter if it already exists
+		if (!repetition)
+		{	ReGenerate(Selection, i);
+		}
+
+		// Keep track of the number of vowels
+		if( vowelList.find(Selection[i].getFigure()) != std::string::npos)
+		{	vowelCount++;
+		}
+
+		// If no vowels have been generated, add a random vowel as the last letter
+		if (i == maxLetters - 1 && vowelCount == 0)
+		{	Selection[i].setFigure(vowelList[rand()% vowelList.size()]);
+		}
 	}
 }
+
 //GetSeed is the function that asks and sets the randomness of the game//
 void GetSeed(int &seed, const int indent)
 {
 	std::string input;
+
 	system("CLS");
 	ShowWholeFile(resPath+"BackgroundTop.dat");
 	ShowWholeFile(resPath+"SeedInstructions.dat");
+
 	std::cout << std::setw(indent) << ' ' << "Seed: ";
 	std::cin >> input;
-	if (input != "Random")
-		seed = atoi(input.data());
-}
-//Usable is a function that tests if a sertain letter is usable or not when the computer guesses//
-bool Usable(std::vector<int> unusable, const int j)
-{
-	//test the banned indexes with the index of the selected letter
-	for (int i = 0; i < unusable.size(); i++)
-	{
-		if (unusable[i] == j)
-			return false;
-	}
-	return true;
-}
 
+	// If the user entered a custom seed, convert it to numbers
+	// If the seed is not numeric, use a random seed
+	if (input != "Random")
+	{	if(atoi(input.data()) != 0)
+		{	seed = atoi(input.data());
+		}
+	}
+}
 
 /*Main Functions*/
 //PlayGame is the main game function handling the gameplay//
 void PlayGame(Option GameOptions[], const std::vector<std::string> &wordList)
 {
-	//Declarations and preparations
-	int seed = time(NULL);
+	// Declarations and preparations
 	int index = 0;
 	int wordListIndex = 0;
+	int seed = (int)time(NULL);
+	
+	int playerScore;
+	int correctWords;
 	char buttonPress;
+
 	std::vector<Letter> Selection(GameOptions[0].getOptionValue());
 	std::vector<Letter*> currentAnswer;
 	std::vector<Answer> previousAnswers(GameOptions[1].getOptionValue());
+
+	// Seeding the random number generator
 	GetSeed(seed, MENUOFFSET);
 	srand(seed);
-	GenerateLetters(Selection, GameOptions[0].getOptionValue(), GameOptions[2].getOptionValue());
+
+	GenerateLetters(Selection, GameOptions[0].getOptionValue(), GameOptions[2].getOptionValue() ? true : false);
 
 	for (int answerCount = 0; answerCount < GameOptions[1].getOptionValue();)
 	{
 		system("CLS");
-		//print art, instructions and data
+
+		// Print art, instructions and data
 		ShowWholeFile(resPath+"BackgroundTop.dat");
 		ShowWholeFile(resPath+"GameInstructions.dat");
-		PrintSelection(Selection, GameOptions[0].getOptionValue());
-		for (int i = 0; i < answerCount; i++)
-			std::cout << previousAnswers[i].getAnswerString() << '\n';
-		for (int i = 0; i < currentAnswer.size(); i++)
-			std::cout << currentAnswer[i]->getFigure();
 
-		//get correct inputs from the user and handle them accordingly
+		PrintSelection(Selection, GameOptions[0].getOptionValue());
+
+		// Print previously committed words
+		for (int i = 0; i < answerCount; i++)
+		{	std::cout << previousAnswers[i].getAnswerString() << '\n';
+		}
+		
+		// Print current word being edited
+		for (int i = 0; i < (int)currentAnswer.size(); i++)
+		{	std::cout << currentAnswer[i]->getFigure();
+		}
+
+		// Get correct inputs from the user and handle them accordingly
 		for (bool correct = false; !correct;)
 		{
 			correct = true;
 			buttonPress = _getch();
-			if (buttonPress == 8 && currentAnswer.size()>0)
-				DeleteLetter(currentAnswer);
-			else if (buttonPress == 13)
-				PassAnswer(currentAnswer, previousAnswers, answerCount++);
+			
+			if (buttonPress == BCKSP && currentAnswer.size()>0)
+			{	DeleteLetter(currentAnswer);
+			}
+			else if (buttonPress == ENTER)
+			{	PassAnswer(currentAnswer, previousAnswers, answerCount++);
+			}
 			else if (isValidChoice(Selection, GameOptions[0].getOptionValue(), buttonPress, index))
-				PickLetter(currentAnswer, Selection, index);
+			{	PickLetter(currentAnswer, Selection, index);
+			}
 			else
-				correct = false;
+			{	correct = false;
+			}
 		}
 	}
-	//show results
+
+	// Show results
 	system("CLS");
 	PrintSelection(Selection, GameOptions[0].getOptionValue());
-	int correctWords = score(wordList, previousAnswers, GameOptions[0].getOptionValue());
+
+	score(wordList, previousAnswers, GameOptions[0].getOptionValue(), playerScore, correctWords);
+
+	std::cout << "\n\n" << "You got a score of " << playerScore << " with " << correctWords <<" correct words!\n";
 	std::cout << "Your Seed was: " << seed << "\n\n";
+
 	system("PAUSE");
 	system("CLS");
-	//handle highscore
+
+	// Handle highscore
 	std::string name;
 	std::vector<std::string> names(10);
 	std::vector<int> score(10);
 	std::vector<int> words(10);
+
 	LoadHighScores(score, names, words, resPath+"HighScores.dat");
+
 	std::cout << "Enter Your Name: ";
-	std::cin>>name;
+	std::cin >> name;
 
-	if (correctWords >= 10)
-		score.push_back(10);
-	else if (correctWords >= 5)
-		score.push_back(8);
-	else if (correctWords >= 0)
-		score.push_back(2);
-	else
-		score.push_back(0);
-
+	score.push_back(playerScore);
 	names.push_back(name);
 	words.push_back(correctWords);
 
 	SortHighScores(score, names, words);
 	SaveHighScores(score, names, words, resPath+"HighScores.dat");
+
 	system("CLS");
 	ShowHighScores();
+
 	_getch();
 	system("CLS");
 }
@@ -556,52 +609,63 @@ void PlayGame(Option GameOptions[], const std::vector<std::string> &wordList)
 //MainMenu function connects everything in the program with a menu//
 void MainMenu()
 {
-	int active = 0;
+	int  active = 0;
+	char btnPress;
 	Option GameOptions[NUMBEROFOPTIONS];
 	Option MainMenuOptions[NUMBEROFMENUOPTIONS];
 	std::vector<std::string> wordList;
-	//pick a pre processed dictionary.. ONLY ONE!
-	/*~10,000 words from DataSet*///DirectLoadDictionary(wordList, "GameResources/allData.dat");
-	/*~58,000 words from internet*/DirectLoadDictionary(wordList, resPath+"InternetList.dat");
+
+	// Pick a pre processed dictionary.. ONLY ONE!
+	/*~10,000 words from DataSet */ //DirectLoadDictionary(wordList, "GameResources/allData.dat");
+	/*~58,000 words from internet*/ DirectLoadDictionary(wordList, resPath+"InternetList.dat");
+
 	LoadOptions(GameOptions, resPath+"Settings.dat", NUMBEROFOPTIONS);
 	LoadOptions(MainMenuOptions, resPath+"MainMenuOptions.dat", NUMBEROFMENUOPTIONS);
-	for (char buttonPress = ' '; !((buttonPress == 13 || buttonPress == ' ') && active == NUMBEROFMENUOPTIONS - 1);)
+
+	for (;;)
 	{
 		system("CLS");
-		//print art and instructions
+
+		// Print art and instructions
 		ShowWholeFile(resPath+"BackgroundTop.dat");
 		ShowWholeFile(resPath+"mainMenuInstructions.dat");
-		//print menu options
+
+		// Print menu options
 		for (int i = 0; i < NUMBEROFMENUOPTIONS; i++)
 			PrintOption(MainMenuOptions[i], active, i, MENUOFFSET);
 
-		buttonPress = _getch();
+		// Take a character Input
+		btnPress = _getch();
+		if (btnPress == 0 || btnPress == 0xE0)
+			btnPress = _getch();
 
-		//make the appropriate action
-		if (tolower(buttonPress) == 'w' && active > 0)
+		// Make the appropriate action
+		if (btnPress == UP && active > 0)
 			active--;
-		else if (tolower(buttonPress) == 's' && active < NUMBEROFMENUOPTIONS - 1)
+		else if (btnPress == DOWN && active < NUMBEROFMENUOPTIONS - 1)
 			active++;
-		else if (buttonPress == 13 || buttonPress == ' ')
-		{
+		else if (btnPress == ENTER)
+		{	system("CLS");
 			switch (active)
-			{
-			case 0: PlayGame(GameOptions, wordList); break;
-			case 1: OptionsMenu(GameOptions); break;
-			case 2: system("CLS"); MakeDictionary(wordList); break;
-			case 3: system("CLS"); ShowHighScores(); _getch(); break;
-			case 4: system("CLS"); ShowWholeFile(resPath+"Credits.dat"); _getch(); system("CLS"); break;
+			{	case 0: PlayGame(GameOptions, wordList); break;
+				case 1: OptionsMenu(GameOptions); break;
+				case 2: MakeDictionary(wordList); break;
+				case 3: ShowHighScores(); break;
+				case 4: Credits(); break;
+				case 5: return;
 			}
 		}
 	}
 }
+
 //Main Function, Does Almost Nothing//
 int main()
 {
-	//loading screen
+	// Loading screen
 	ShowWholeFile(resPath+"LoadingScreen.dat");
 	Sleep(300);
+
 	MainMenu();
-	return 1;
+	return 0;
 }
 
