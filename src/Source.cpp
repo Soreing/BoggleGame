@@ -19,6 +19,8 @@
 #define ENTER 13
 #define ESC   27
 #define UP    72
+#define LEFT  75
+#define RIGHT 77
 #define DOWN  80
 
 static const std::string resPath = "../Resources/";
@@ -172,9 +174,9 @@ void PrintOption(Option &oneOption, const int active, const int index, const int
 void OptionsMenu(Option GameOptions[])
 {
 	int active = 0;
+	char btnPress;
 
-	//exit upon escape or enter
-	for (char buttonPress = ' '; buttonPress != ESC && buttonPress != ENTER;)
+	for (;;)
 	{
 		system("CLS");
 
@@ -187,20 +189,26 @@ void OptionsMenu(Option GameOptions[])
 		{	PrintOption(GameOptions[i], active, i, MENUOFFSET);
 		}
 
-		buttonPress = _getch();
+		// Take a character Input
+		btnPress = _getch();
+		if (btnPress == 0 || btnPress == 0xE0)
+			btnPress = _getch();
 
 		//act according to input
-		if (tolower(buttonPress) == 'w' && active > 0)
+		if (btnPress == UP && active > 0)
 		{	active--;
 		}
-		else if (tolower(buttonPress) == 's' && active < NUMBEROFOPTIONS - 1)
+		else if (btnPress == DOWN && active < NUMBEROFOPTIONS - 1)
 		{	active++;
 		}
-		else if (tolower(buttonPress) == 'a')
+		else if (btnPress == LEFT)
 		{	ChangeOptionValue(GameOptions[active], -1);
 		}
-		else if (tolower(buttonPress) == 'd')
+		else if (btnPress == RIGHT)
 		{	ChangeOptionValue(GameOptions[active], 1);
+		}
+		else if( btnPress == ENTER || btnPress == ESC)
+		{	return;
 		}
 	}
 
