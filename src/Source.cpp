@@ -1,6 +1,7 @@
 #include"Answer.h"
 #include"Option.h"
 #include"Letter.h"
+
 #include<iostream>
 #include<cstdlib>
 #include<ctime>
@@ -640,18 +641,22 @@ void MainMenu()
 
 		// Print menu options
 		for (int i = 0; i < NUMBEROFMENUOPTIONS; i++)
-			PrintOption(MainMenuOptions[i], active, i, MENUOFFSET);
+		{	PrintOption(MainMenuOptions[i], active, i, MENUOFFSET);
+		}
 
 		// Take a character Input
 		btnPress = _getch();
 		if (btnPress == 0 || btnPress == 0xE0)
-			btnPress = _getch();
+		{	btnPress = _getch();
+		}
 
 		// Make the appropriate action
 		if (btnPress == UP && active > 0)
-			active--;
+		{	active--;
+		}
 		else if (btnPress == DOWN && active < NUMBEROFMENUOPTIONS - 1)
-			active++;
+		{	active++;
+		}
 		else if (btnPress == ENTER)
 		{	system("CLS");
 			switch (active)
