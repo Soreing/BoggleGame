@@ -642,6 +642,117 @@ void PlayGame(Option GameOptions[], const std::vector<std::string> &wordList)
 	emptyScreen();
 }
 
+// Tries to use a letter. Return true if available, false if not
+bool tryLetter(std::vector<Letter> &selection, const char letter)
+{
+	for (int i = 0; i < (int)selection.size(); i++)
+	{	if (selection[i].getFigure() == letter && !selection[i].getUsed())
+		{	selection[i].setUsed(true);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// Tries to construct a word from letters. Returns true if possible, false if not
+bool tryWord(std::vector<Letter> selection, std::string word)
+{
+	for (int i = 0; i < (int)word.length(); i++)
+	{	if (!tryLetter(selection, word[i]))
+		{	return false;
+		}
+	}
+
+	return true;
+}
+
+//Simulation is the computer playing the game with the same rules//
+void Simulation(Option GameOptions[], const std::vector<std::string> &wordList)
+{
+	// Declarations and preparations
+	int index = 0;
+	int wordListIndex = 0;
+	int seed = (int)time(NULL);
+	
+	int playerScore;
+	int correctWords;
+
+	std::vector<Letter> Selection(GameOptions[0].getOptionValue());
+	std::vector<Answer> previousAnswers(GameOptions[1].getOptionValue());
+
+	// Seeding the random number generator
+	GetSeed(seed, MENUOFFSET);
+	srand(seed);
+
+	GenerateLetters(Selection, GameOptions[0].getOptionValue(), GameOptions[2].getOptionValue() ? true : false);
+
+	for (int answerCount = 0; answerCount < GameOptions[1].getOptionValue();)
+	{
+		emptyScreen();
+
+		// Print art, instructions and data
+		ShowWholeFile(resPath+"BackgroundTop.dat");
+		ShowWholeFile(resPath+"GameInstructions.dat");
+
+		PrintSelection(Selection, GameOptions[0].getOptionValue());
+
+		// Print previously committed words
+		for (int i = 0; i < answerCount; i++)
+		{	std::cout << previousAnswers[i].getAnswerString() << '\n';
+		}
+
+		//Find a correct word
+		for (; wordListIndex < (int)wordList.size(); wordListIndex++)
+		{	if (wordList[wordListIndex].size() > 2 && tryWord(Selection, wordList[wordListIndex]))
+			{	break;
+			}
+		}
+
+		// Add answer to list if it exists, otherwise just add a space
+		previousAnswers[answerCount].setAnswerString( wordListIndex < (int)wordList.size() ? wordList[wordListIndex] : " ");
+
+		wordListIndex++;
+		answerCount++;
+
+		// Slow down to see the answers
+		Sleep(300);
+	}
+
+	// Show results
+	emptyScreen();
+	PrintSelection(Selection, GameOptions[0].getOptionValue());
+
+	score(wordList, previousAnswers, GameOptions[0].getOptionValue(), playerScore, correctWords);
+
+	std::cout << "\n\n" << "You got a score of " << playerScore << " with " << correctWords <<" correct words!\n";
+	std::cout << "Your Seed was: " << seed << "\n\n";
+
+	std::cout<< "Press any key to continue...\n";
+	_getch();
+	emptyScreen();
+
+	// Handle highscore
+	std::vector<std::string> names(10);
+	std::vector<int> score(10);
+	std::vector<int> words(10);
+
+	LoadHighScores(score, names, words, resPath+"HighScores.dat");
+
+	score.push_back(playerScore);
+	names.push_back("Computer");
+	words.push_back(correctWords);
+
+	SortHighScores(score, names, words);
+	SaveHighScores(score, names, words, resPath+"HighScores.dat");
+
+	emptyScreen();
+	ShowHighScores();
+
+	_getch();
+	emptyScreen();
+}
+
 //MainMenu function connects everything in the program with a menu//
 void MainMenu()
 {
@@ -687,12 +798,13 @@ void MainMenu()
 		else if (btnPress == ENTER)
 		{	emptyScreen();
 			switch (active)
-			{	case 0: PlayGame(GameOptions, wordList); break;
-				case 1: OptionsMenu(GameOptions); break;
-				case 2: MakeDictionary(wordList); break;
-				case 3: ShowHighScores(); break;
-				case 4: Credits(); break;
-				case 5: return;
+			{	case 0: Simulation(GameOptions, wordList); break;
+				case 1: PlayGame(GameOptions, wordList); break;
+				case 2: OptionsMenu(GameOptions); break;
+				case 3: MakeDictionary(wordList); break;
+				case 4: ShowHighScores(); break;
+				case 5: Credits(); break;
+				case 6: return;
 			}
 		}
 	}
